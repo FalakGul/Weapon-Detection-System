@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Weapon Detection System</title>
+  <style>
+    :root{
+      --bg-1: linear-gradient(135deg,#0f172a 0%, #071029 60%);
+      --glass: rgba(255,255,255,0.06);
+      --accent: #ff6b6b;
+      --accent-2: #7c5cff;
+      --muted: rgba(255,255,255,0.65);
+      --card-radius: 16px;
+      --shadow-lg: 0 12px 30px rgba(2,6,23,0.6);
+      --max-width: 1100px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:var(--bg-1);color:#fff}
+    a{color:inherit}
+    .page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:48px 20px}
+    .shell{width:100%;max-width:var(--max-width);}
+    header.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+    .brand{display:flex;gap:14px;align-items:center}
+    .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(124,92,255,0.18);font-weight:700}
+    .brand h1{margin:0;font-size:20px;letter-spacing:0.2px}
+    .brand p{margin:0;font-size:12px;color:var(--muted)}
+    nav.topnav{display:flex;gap:12px;align-items:center}
+    .nav-link{padding:8px 14px;border-radius:10px;background:transparent;border:1px solid transparent;font-weight:600;cursor:pointer;color:#ffffff}
+    .nav-link:hover{background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border-color:rgba(255,255,255,0.04)}
+    .nav-link.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#081028;box-shadow:0 6px 20px rgba(124,92,255,0.18)}
+    .grid{display:grid;grid-template-columns:1fr 420px;gap:28px}
+    @media (max-width:1000px){.grid{grid-template-columns:1fr} .right-column{order:-1}}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border-radius:var(--card-radius);padding:18px;box-shadow:var(--shadow-lg);backdrop-filter: blur(6px);border:1px solid rgba(255,255,255,0.03)}
+    .hero{display:flex;align-items:center;gap:18px;padding:24px;border-radius:20px}
+    .hero .left{flex:1}
+    .hero h2{margin:0 0 6px 0;font-size:24px}
+    .hero p{margin:0;color:var(--muted)}
+    .controls{display:flex;gap:12px;margin-top:14px}
+    .btn{padding:10px 14px;border-radius:12px;border:0;cursor:pointer;font-weight:700;color:#ffffff}
+    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#071028}
+    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+    .dropzone{height:220px;border-radius:12px;border:2px dashed rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;transition:all .25s}
+    .dropzone.dragover{border-color:var(--accent);transform:translateY(-6px)}
+    .dropzone small{display:block;color:var(--muted);margin-top:8px}
+    .preview-wrap{position:relative;border-radius:12px;overflow:hidden}
+    .preview{width:100%;height:100%;display:block;object-fit:cover}
+    .result-badge{position:absolute;left:12px;top:12px;background:rgba(0,0,0,0.45);padding:6px 10px;border-radius:10px;font-weight:700}
+    .overlay-canvas{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+    .status-list{display:flex;flex-direction:column;gap:10px}
+    .stat{display:flex;gap:12px;align-items:center}
+    .stat .dot{width:12px;height:12px;border-radius:4px}
+    .stat h4{margin:0;font-size:14px}
+    .muted{color:var(--muted)}
+    .gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .gif{aspect-ratio:16/10;border-radius:10px;overflow:hidden;position:relative}
+    .gif img{width:100%;height:100%;object-fit:cover;display:block}
+    .webcam-wrap{position:relative;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent)}
+    .webcam video{width:100%;height:auto;display:block}
+    .controls-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .muted-small{color:var(--muted);font-size:13px}
+    @keyframes pulseAccent{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+    .pulse{animation:pulseAccent 3s infinite}
+    footer{margin-top:22px;color:var(--muted);font-size:13px;text-align:center}
+    .box{position:absolute;border-radius:8px;border:3px solid var(--accent);box-shadow:0 6px 16px rgba(0,0,0,0.6);pointer-events:none}
+    .box .label{position:absolute;left:0;top:-28px;background:linear-gradient(90deg,var(--accent),var(--accent-2));padding:6px 10px;border-radius:8px;font-weight:700;color:#081028}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="logo">W</div>
+          <div>
+            <h1>Weapon Detection</h1>
+            <p>Image • Video • Real-time</p>
+          </div>
+        </div>
+        <nav class="topnav" id="main-nav">
+          <button class="nav-link active" data-target="home">Home</button>
+          <button class="nav-link" data-target="image">Image</button>
+          <button class="nav-link" data-target="video">Video</button>
+          <button class="nav-link" data-target="realtime">Real-time</button>
+        </nav>
+      </header>
+      <main class="grid">
+        <section class="left-column">
+          <!-- HOME -->
+          <div id="home" class="card view" data-view>
+            <div class="hero">
+              <div class="left">
+                <h2>Advanced Weapon Detection</h2>
+                <p>Upload images or videos to detect weapons with AI. Real-time webcam support included.</p>
+                <div class="controls">
+                  <button class="btn primary" data-action="open" data-target="image">Detect Image</button>
+                  <button class="btn ghost" data-action="open" data-target="video">Detect Video</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- IMAGE -->
+          <div id="image" class="card view" data-view style="display:none">
+            <h2 style="margin-top:0">Image Detection</h2>
+            <div class="dropzone" id="image-drop">
+              <div>
+                <strong>Drag & drop an image</strong>
+                <small>or click to select (png / jpg / jpeg)</small>
+                <div style="margin-top:12px">
+                  <input type="file" id="image-file" accept="image/*" style="display:none" />
+                  <button class="btn primary" id="image-select">Choose Image</button>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:14px;display:grid;grid-template-columns:1fr 200px;gap:14px">
+              <div class="card preview-wrap" style="min-height:320px;position:relative">
+                <img id="image-preview" src="" alt="preview" class="preview" style="display:none" />
+                <div id="image-result" class="overlay-canvas"></div>
+                <div id="image-badge" class="result-badge" style="display:none"></div>
+              </div>
+              <div class="card">
+                <h4 style="margin-top:0">Results</h4>
+                <div id="image-results-list" style="display:flex;flex-direction:column;gap:8px"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIDEO -->
+          <div id="video" class="card view" data-view style="display:none">
+            <h2 style="margin-top:0">Video Detection</h2>
+            <div class="dropzone" id="video-drop">
+              <div>
+                <strong>Drag & drop a video</strong>
+                <small>or click to select (mp4 / webm)</small>
+                <div style="margin-top:12px">
+                  <input type="file" id="video-file" accept="video/*" style="display:none" />
+                  <button class="btn primary" id="video-select">Choose Video</button>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top:14px;display:grid;grid-template-columns:1fr 200px;gap:14px">
+              <div class="card preview-wrap" style="min-height:320px;position:relative">
+                <video id="video-preview" controls class="preview" style="display:none"></video>
+                <div id="video-result" class="overlay-canvas"></div>
+                <div id="video-badge" class="result-badge" style="display:none">Processing...</div>
+              </div>
+              <div class="card">
+                <h4 style="margin-top:0">Progress</h4>
+                <div id="video-progress">Ready</div>
+                <!-- REMOVED WEAPON TEXT FROM VIDEO (AS REQUESTED) -->
+              </div>
+            </div>
+          </div>
+
+          <!-- REAL-TIME -->
+          <div id="realtime" class="card view" data-view style="display:none">
+            <h2 style="margin-top:0">Real-time (Webcam)</h2>
+            <div class="webcam-wrap card" style="min-height:360px;position:relative">
+              <video id="webcam" autoplay playsinline muted></video>
+              <canvas id="webcam-overlay" class="overlay-canvas"></canvas>
+              <div id="realtime-badge" class="result-badge" style="display:none">Live</div>
+            </div>
+            <div class="controls-row">
+              <button class="btn primary" id="start-webcam">Start Webcam</button>
+              <button class="btn ghost" id="stop-webcam">Stop</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="right-column">
+          <div class="card">
+            <h3 style="margin-top:0">System Status</h3>
+            <div class="status-list">
+              <div class="stat"><div class="dot" style="background:lime"></div><div><h4>Backend</h4><div class="muted-small">Online</div></div></div>
+              <div class="stat"><div class="dot" style="background:var(--accent)"></div><div><h4>Model</h4><div class="muted-small">YOLOv8 Custom</div></div></div>
+            </div>
+          </div>
+
+          <!-- PRESENTATION MODE -->
+          <div class="card" style="margin-top:16px">
+            <h3 style="margin-top:0">Presentation Mode</h3>
+            <p class="muted-small">Use during demo or presentation.</p>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button class="btn ghost" id="fullscreen-btn">Fullscreen</button>
+              <button class="btn primary" id="snapshot-btn">Snapshot</button>
+            </div>
+          </div>
+        </aside>
+      </main>
+      <footer>Weapon Detection System • Local Deployment</footer>
+    </div>
+  </div>
+
+  <!-- ALERT SOUND (CORRECT PATH) -->
+  <audio id="alert-sound" src="/static/sounds/alert.mp3" preload="auto"></audio>
+
+  <script>
+    const CONFIG = {
+      endpoints: {
+        image: '/detect/image',
+        video: '/detect/video',
+        realtime_http: '/detect/realtime',
+        realtime_ws: 'ws://127.0.0.1:5000/ws/realtime'
+      },
+      frameIntervalMs: 200
+    }
+
+    // SPA Navigation
+    document.querySelectorAll('[data-target]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-view]').forEach(v => v.style.display = 'none')
+        document.getElementById(btn.dataset.target).style.display = 'block'
+        document.querySelectorAll('.nav-link').forEach(x => x.classList.remove('active'))
+        btn.classList.add('active')
+      })
+    })
+    document.querySelectorAll('[data-action="open"]').forEach(b => {
+      b.addEventListener('click', () => {
+        const target = b.dataset.target
+        document.querySelector(`.nav-link[data-target="${target}"]`).click()
+      })
+    })
+
+    // Helpers
+    function clearOverlay(c) { while (c.firstChild) c.removeChild(c.firstChild) }
+    function drawBoxes(container, detections) {
+      const w = container.clientWidth, h = container.clientHeight
+      clearOverlay(container)
+      detections.forEach(d => {
+        let xmin = d.xmin, ymin = d.ymin, xmax = d.xmax, ymax = d.ymax
+        if (xmax <= 1) { xmin *= w; xmax *= w; ymin *= h; ymax *= h }
+        const box = document.createElement('div')
+        box.className = 'box'
+        box.style.left = xmin + 'px'; box.style.top = ymin + 'px'
+        box.style.width = (xmax - xmin) + 'px'; box.style.height = (ymax - ymin) + 'px'
+        const label = document.createElement('div')
+        label.className = 'label'
+        label.textContent = `${d.label} ${(d.score*100).toFixed(1)}%`
+        box.appendChild(label)
+        container.appendChild(box)
+      })
+    }
+
+    // IMAGE (KEEPS WEAPON TEXT + SOUND)
+    const imageDrop = document.getElementById('image-drop')
+    const imageFileInput = document.getElementById('image-file')
+    const imageSelectBtn = document.getElementById('image-select')
+    const imagePreview = document.getElementById('image-preview')
+    const imageResult = document.getElementById('image-result')
+    const imageBadge = document.getElementById('image-badge')
+    const imageResultsList = document.getElementById('image-results-list')
+
+    imageSelectBtn.onclick = () => imageFileInput.click()
+    imageFileInput.onchange = e => handleImageFile(e.target.files[0])
+    ;['dragenter','dragover'].forEach(ev => imageDrop.addEventListener(ev, e => {e.preventDefault(); imageDrop.classList.add('dragover')}))
+    ;['dragleave','drop'].forEach(ev => imageDrop.addEventListener(ev, e => {e.preventDefault(); imageDrop.classList.remove('dragover')}))
+    imageDrop.ondrop = e => { const f = e.dataTransfer.files[0]; handleImageFile(f) }
+
+    async function handleImageFile(file) {
+      if (!file) return
+      const url = URL.createObjectURL(file)
+      imagePreview.src = url; imagePreview.style.display = 'block'
+      imageBadge.style.display = 'none'; imageResultsList.innerHTML = ''
+      const form = new FormData(); form.append('file', file)
+      try {
+        const res = await fetch(CONFIG.endpoints.image, {method: 'POST', body: form})
+        const data = await res.json()
+        const det = data.detections || []
+        
+        // Wait for boxes to render
+        setTimeout(() => {
+          const hasWeapon = imageResult.querySelector('.box')
+          imageBadge.style.display = 'block'
+          imageBadge.textContent = hasWeapon ? 'Weapon found' : 'No Weapon'
+          if (hasWeapon) {
+            imageBadge.style.background = 'linear-gradient(90deg, #ff6b6b, #ee5a52)'
+            document.getElementById('alert-sound').play().catch(() => {})
+          } else {
+            imageBadge.style.background = 'rgba(0,0,0,0.45)'
+          }
+        }, 500)
+
+        imageResultsList.innerHTML = det.map(d => `<div style="padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.02)">${d.label} ${(d.score*100).toFixed(1)}%</div>`).join('')
+        drawBoxes(imageResult, det)
+      } catch (err) {
+        imageResultsList.innerHTML = `<div class="muted-small">Error: ${err.message}</div>`
+      }
+    }
+
+    // VIDEO (REMOVED WEAPON TEXT + SOUND ON INTERACTION)
+    const videoDrop = document.getElementById('video-drop')
+    const videoSelect = document.getElementById('video-select')
+    const videoFileInput = document.getElementById('video-file')
+    const videoPreview = document.getElementById('video-preview')
+    const videoResult = document.getElementById('video-result')
+    const videoBadge = document.getElementById('video-badge')
+    const videoProgress = document.getElementById('video-progress')
+
+    videoSelect.onclick = () => videoFileInput.click()
+    videoFileInput.onchange = e => handleVideoFile(e.target.files[0])
+    ;['dragenter','dragover'].forEach(ev => videoDrop.addEventListener(ev, e => {e.preventDefault(); videoDrop.classList.add('dragover')}))
+    ;['dragleave','drop'].forEach(ev => videoDrop.addEventListener(ev, e => {e.preventDefault(); videoDrop.classList.remove('dragover')}))
+    videoDrop.ondrop = e => { const f = e.dataTransfer.files[0]; handleVideoFile(f) }
+
+    async function handleVideoFile(file) {
+      if (!file) return
+      videoPreview.style.display = 'none'
+      videoBadge.style.display = 'block'
+      videoBadge.textContent = 'Uploading...'
+      videoProgress.textContent = 'Uploading video...'
+      const form = new FormData(); form.append('file', file)
+      try {
+        const res = await fetch(CONFIG.endpoints.video, {method: 'POST', body: form})
+        const data = await res.json()
+        if (data.video_url) {
+          videoPreview.src = data.video_url + '?t=' + Date.now()
+          videoPreview.style.display = 'block'
+          videoPreview.load()
+          videoPreview.onloadeddata = () => {
+            videoPreview.play()
+            videoProgress.textContent = 'Processing complete'
+            videoBadge.textContent = 'Video ready'
+            // SOUND ON FIRST PLAY (USER INTERACTION)
+            videoPreview.addEventListener('play', () => {
+              const hasWeapon = videoResult.querySelector('.box')
+              if (hasWeapon) {
+                document.getElementById('alert-sound').play().catch(() => {})
+              }
+            }, {once: true})
+          }
+        }
+      } catch (err) {
+        videoProgress.textContent = 'Error: ' + err.message
+      }
+    }
+
+    // FULLSCREEN & SNAPSHOT
+    document.getElementById('fullscreen-btn').onclick = () => {
+      const elem = document.getElementById('video-preview')
+      if (elem.requestFullscreen) elem.requestFullscreen()
+      else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen()
+      else if (elem.msRequestFullscreen) elem.msRequestFullscreen()
+    }
+
+    document.getElementById('snapshot-btn').onclick = () => {
+      const video = document.getElementById('video-preview')
+      if (!video.videoWidth) return
+      const canvas = document.createElement('canvas')
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      canvas.getContext('2d').drawImage(video, 0, 0)
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `weapon_snapshot_${Date.now()}.png`
+        a.click()
+      }, 'image/png')
+    }
+
+    // REAL-TIME
+    const startWebcamBtn = document.getElementById('start-webcam')
+    const stopWebcamBtn = document.getElementById('stop-webcam')
+    const webcamVideo = document.getElementById('webcam')
+    let stream = null
+
+    startWebcamBtn.onclick = async () => {
+      if (stream) return
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({video: true})
+        webcamVideo.srcObject = stream
+        document.getElementById('realtime-badge').style.display = 'block'
+      } catch (err) { alert('Camera access denied') }
+    }
+    stopWebcamBtn.onclick = () => {
+      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; webcamVideo.srcObject = null }
+      document.getElementById('realtime-badge').style.display = 'none'
+    }
+
+    // Init
+    openView('home')
+    function openView(id) {
+      document.querySelectorAll('[data-view]').forEach(v => v.style.display = 'none')
+      document.getElementById(id).style.display = 'block'
+    }
+  </script>
+</body>
+</html>
